@@ -1,9 +1,6 @@
 package com.laipel.ensorcellcraft;
 
-import com.laipel.ensorcellcraft.common.registry.BlockRegistry;
-import com.laipel.ensorcellcraft.common.registry.EntityRegistry;
-import com.laipel.ensorcellcraft.common.registry.ItemRegistry;
-import com.laipel.ensorcellcraft.common.registry.SoulRegistry;
+import com.laipel.ensorcellcraft.common.registry.*;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
@@ -26,6 +23,7 @@ public class Ensorcellcraft {
         BlockRegistry.register();
         ItemRegistry.register();
         EntityRegistry.register();
+        ParticleRegistry.register();
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)

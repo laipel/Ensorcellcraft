@@ -1,171 +1,173 @@
 package com.laipel.ensorcellcraft.utils;
 
-import com.laipel.ensorcellcraft.common.registry.ShaderRegistry;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.laipel.ensorcellcraft.api.IStreakable;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import lombok.Builder;
-import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import static com.laipel.ensorcellcraft.client.render.renderTypes.EnsRenderType.getLightColor;
 import static com.laipel.ensorcellcraft.utils.VectorUtils.Y_VEC;
 
 public class RenderUtils {
 
-    public static final RenderType DEFAULT_COLOR = RenderType.create("default_color_tex", DefaultVertexFormat.POSITION_COLOR,
-            VertexFormat.Mode.QUADS, 256, false, false,
-            RenderType.CompositeState.builder()
-                    .setLightmapState(new RenderStateShard.LightmapStateShard(false))
-                    .setTransparencyState(new RenderStateShard.TransparencyStateShard("custom_transparancy", () -> {
-                        RenderSystem.enableBlend();
-                        RenderSystem.defaultBlendFunc();
-                    }, () -> {
-                        RenderSystem.disableBlend();
-                        RenderSystem.defaultBlendFunc();
-                    }))
-                    .setCullState(new RenderStateShard.CullStateShard(false))
-                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
-                    .createCompositeState(false));
-
-    public static void drawStreak(Entity entity, float pTicks, PoseStack poseStack, MultiBufferSource bufferSourceList, List<Streak> streaks) {
+    public static void drawStreak(IStreakable<? extends Entity> streakable, float pTicks, PoseStack poseStack, MultiBufferSource bufferSourceList) {
 
         ClientLevel world = Minecraft.getInstance().level;
+        Entity entity = streakable.get();
+        List<IStreakable.Streak> streaks = streakable.getStreaks();
+        CompoundTag persistentData = entity.getPersistentData();
+
+        double d0 = Mth.lerp(pTicks, entity.xOld, entity.getX());
+        double d1 = Mth.lerp(pTicks, entity.yOld, entity.getY());
+        double d2 = Mth.lerp(pTicks, entity.zOld, entity.getZ());
+
         if (world == null)
             return;
         long time = world.dayTime();
         if (streaks.isEmpty())
             return;
+
         for (int j = 0; j < streaks.size(); j++) {
-            Streak streak = streaks.get(j);
-            CompoundTag persistentData = entity.getPersistentData();
-            CompoundTag nbttc = persistentData.getCompound("Ens:streak" + j);
-            int segments = 0;
-            if (streak.getSegments() <= 0 || streak.getSegmentsLife() <= 0)
+
+            IStreakable.Streak streak = streaks.get(j);
+            CompoundTag nbttc = persistentData.getCompound("Ens:Streak" + j);
+            int segmentsDisappearingSpeed = 5;
+            int segments = streak.getSegments() - Math.max(0,
+                    streak.getSegments() - streakable.ticksBeforeDeath() / segmentsDisappearingSpeed);
+
+            if (segments < 0 || streak.getSegmentsLife() <= 0)
                 continue;
-            Vec3[] prevPoss = new Vec3[streak.getSegments() + 1];
-            int tick = (int) (time % streak.getSegmentsLife());
-            if (time % streak.getSegmentsLife() == 0 && nbttc.getLong("time") != time) {
+            List<Vec3> savedPoss = new ArrayList<>();
+            List<Vec3> prevPoses = new ArrayList<>();
+            boolean anotherTick = nbttc.getLong("time") != time;
+            float partial = (int) (time % streak.getSegmentsLife()) + pTicks;
+
+            Vec3 vecOld = new Vec3(entity.xo, entity.yo, entity.zo);
+            Vec3 matrixTranslation = new Vec3(d0, d1, d2);
+
+            for (int i = 0; nbttc.contains(String.valueOf(i)) && i <= segments + 1; i++)
+                savedPoss.add(VectorUtils.loadFromNBT(String.valueOf(i), nbttc));
+
+            if (time % streak.getSegmentsLife() == 0 && anotherTick) {
                 nbttc.putLong("time", time);
-                for (int i = streak.getSegments() + 1; i >= 0; i--) {
-                    if (i == 0) {
-                        nbttc.putDouble("x" + i, entity.xo);
-                        nbttc.putDouble("y" + i, entity.yo);
-                        nbttc.putDouble("z" + i, entity.zo);
-                    } else if (nbttc.contains("x" + (i - 1))) {
-                        double x = nbttc.getDouble("x" + (i - 1));
-                        double y = nbttc.getDouble("y" + (i - 1));
-                        double z = nbttc.getDouble("z" + (i - 1));
-                        nbttc.putDouble("x" + i, x);
-                        nbttc.putDouble("y" + i, y);
-                        nbttc.putDouble("z" + i, z);
-                    }
+                if (savedPoss.size() >= segments + 1) {
+                    Collections.rotate(savedPoss, 1);
+                    savedPoss.set(0, vecOld);
+                } else {
+                    savedPoss.add(vecOld);
+                    Collections.rotate(savedPoss, 1);
                 }
-
-                persistentData.put("Ens:streak" + j, nbttc);
             }
 
-            prevPoss[0] = new Vec3(
-                    entity.xo + (entity.position().x - entity.xo) * pTicks,
-                    entity.yo + (entity.position().y - entity.yo) * pTicks,
-                    entity.zo + (entity.position().z - entity.zo) * pTicks);
+            prevPoses.add(new Vec3(0, 0, 0));
 
-            for (int i = 1; i <= streak.getSegments() + 1; i++) {
-                if (!nbttc.contains("x" + (i - 1)))
-                    return;
-                double x = nbttc.getDouble("x" + (i - 1));
-                double y = nbttc.getDouble("y" + (i - 1));
-                double z = nbttc.getDouble("z" + (i - 1));
-                if (i == streak.getSegments() + 1) {
-                    Vec3 vec = new Vec3(x, y, z);
-                    prevPoss[i - 1] = prevPoss[i - 1].add(vec.subtract(prevPoss[i - 1])
-                            .scale(1 - (tick + pTicks) / (float) streak.getSegmentsLife()));
+            for (int i = 0; i < savedPoss.size(); i++) {
+                Vec3 pos = savedPoss.get(i);
+                if (time % streak.getSegmentsLife() == 0 && anotherTick)
+                    VectorUtils.saveToNBT(String.valueOf(i), nbttc, pos);
+                if (i == 0)
                     continue;
-                }
-                segments++;
-                prevPoss[i] = new Vec3(x, y, z);
-                if (nbttc.contains("x" + i))
-                    prevPoss[i - 1] = prevPoss[i - 1].add(prevPoss[i].subtract(prevPoss[i - 1])
-                            .scale(1 - (tick + pTicks) / (float) streak.getSegmentsLife()));
+                Vec3 translated = pos.subtract(matrixTranslation);
+                Vec3 translatedPrev = savedPoss.get(i - 1).subtract(matrixTranslation);
+                Vec3 toAdd = translatedPrev.add(translated.subtract(translatedPrev).scale(1 - partial / (float) streak.getSegmentsLife()));
+                prevPoses.add(toAdd);
             }
 
-            Vec3[] crossVecs = new Vec3[segments];
+            float deathPartial = (segmentsDisappearingSpeed - streakable.ticksBeforeDeath() % segmentsDisappearingSpeed) - 1 + pTicks;
 
-            for (int i = 1; i < segments + 1; i++) {
-                if (streak.getSegments() < 2)
-                    break;
-                if (prevPoss[i] == null) {
-                    break;
+            if (streak.getSegments() > segments) {
+                for (int i = prevPoses.size() - 1; i > 0; i--) {
+                    Vec3 pos = prevPoses.get(i);
+                    Vec3 prev = prevPoses.get(i - 1);
+                    Vec3 toAdd = prev.add(pos.subtract(prev).scale(1 - deathPartial / (float) segmentsDisappearingSpeed));
+                    prevPoses.set(i, toAdd);
                 }
-                Vec3 pos1 = prevPoss[i - 1];
-                Vec3 pos2 = prevPoss[i];
-                Vec3 vec1 = pos1.subtract(pos2);
-                if (vec1.normalize().equals(new Vec3(0, 1, 0)))
-                    crossVecs[i - 1] = new Vec3(streak.getWidth() * (1 - (i - 1) / (float) segments), 0, 0);
-                else
-                    crossVecs[i - 1] = vec1.cross(Y_VEC).normalize()
-                            .scale(streak.getWidth() * (1 - (i - 1) / (float) segments));
             }
 
-            Color color1 = new Color(streak.getFirstColor().getRed(), streak.getFirstColor().getGreen(), streak.getFirstColor().getRed(), (int) (streak.getStartAlpha() * 255));
-            Color color2 = new Color(streak.getSecondColor().getRed(), streak.getSecondColor().getGreen(), streak.getSecondColor().getRed(), (int) (streak.getFinalAlpha() * 255));
+
+            persistentData.put("Ens:Streak" + j, nbttc);
+
+            Vec3[][] crossVecs = new Vec3[prevPoses.size()][2];
+
+            for (int i = 1; i < prevPoses.size(); i++) {
+                Vec3 pos1 = prevPoses.get(i - 1);
+                Vec3 pos2 = prevPoses.get(i);
+                Vec3 vec1 = pos2.subtract(pos1);
+                Vec3 notScaled = vec1.normalize().equals(new Vec3(0, 1, 0))
+                        ? vec1.add(0.0001, 0, 0).cross(Y_VEC)
+                        : vec1.cross(Y_VEC).normalize();
+                double len = 1 - (i - 1) / (float) prevPoses.size();
+                crossVecs[i - 1][0] = notScaled.normalize()
+                        .scale(streak.getWidth() * len);
+                Vec3 axis = prevPoses.get(i - 1).subtract(prevPoses.get(i));
+                crossVecs[i - 1][1] = VectorUtils.rotate(crossVecs[i - 1][0], axis, 90).normalize().scale(crossVecs[i - 1][0].length());
+            }
+
+            if (streak.getSegments() > segments) {
+                for (int i = prevPoses.size() - 2; i > 0; i--) {
+                    double len = 1 - i / (float) prevPoses.size();
+                    double prevLen = 1 - (i - 1) / (float) prevPoses.size(); // prevLen > len
+                    double finalLen = Mth.lerp(deathPartial / (float) segmentsDisappearingSpeed, len, prevLen);
+                    crossVecs[i][0] = crossVecs[i][0].normalize().scale(streak.getWidth() * finalLen);
+                    crossVecs[i][1] = crossVecs[i][1].normalize().scale(streak.getWidth() * finalLen);
+                }
+            }
+
+            Color color1 = new Color(streak.getFirstColor().getRed(), streak.getFirstColor().getGreen(), streak.getFirstColor().getBlue(), (int) (streak.getStartAlpha() * 255));
+            Color color2 = new Color(streak.getSecondColor().getRed(), streak.getSecondColor().getGreen(), streak.getSecondColor().getBlue(), (int) (streak.getFinalAlpha() * 255));
 
             poseStack.pushPose();
             Matrix4f matrix4f = poseStack.last().pose();
 
-            VertexConsumer tes = bufferSourceList.getBuffer(DEFAULT_COLOR);
-            for (int i = 0; i < crossVecs.length; i++) {
-                if (crossVecs[i] == null)
+            VertexConsumer tes = bufferSourceList.getBuffer(getLightColor());
+            for (int i = 0; i < prevPoses.size(); i++) {
+                if (crossVecs[i][0] == null)
                     break;
-                Color c1 = ColorUtils.blend(color2, color1, ((float) i) / crossVecs.length);
-                Color c2 = ColorUtils.blend(color2, color1, ((float) i + 1) / crossVecs.length);
-                Vec3 axis1 = prevPoss[i].subtract(prevPoss[i + 1]);
+                Color c1 = ColorUtils.blend(color1, color2, ((float) i) / (prevPoses.size() - 1));
+                Color c2 = ColorUtils.blend(color1, color2, ((float) i + 1) / (prevPoses.size() - 1));
 
-                Vec3 vec1 = VectorUtils.rotate(crossVecs[i], axis1, 90);
-                if (i == crossVecs.length - 1 || crossVecs[i + 1] == null) {
-                    Vec3 pos11 = prevPoss[i].add(crossVecs[i]);
-                    Vec3 pos12 = prevPoss[i].add(vec1);
-                    Vec3 pos13 = prevPoss[i].add(crossVecs[i].scale(-1));
-                    Vec3 pos14 = prevPoss[i].add(vec1.scale(-1));
-                    Vec3 pos2 = prevPoss[i + 1];
+                if (i == crossVecs.length - 1 || crossVecs[i + 1][0] == null) {
+                    Vec3 pos11 = prevPoses.get(i).add(crossVecs[i][0]);
+                    Vec3 pos12 = prevPoses.get(i).add(crossVecs[i][1]);
+                    Vec3 pos13 = prevPoses.get(i).add(crossVecs[i][0].scale(-1));
+                    Vec3 pos14 = prevPoses.get(i).add(crossVecs[i][1].scale(-1));
+                    Vec3 pos2 = prevPoses.get(i + 1);
 
+                    TesselatorUtils.drawQuadGradient(tes, matrix4f, pos12.x, pos12.y, pos12.z,
+                            pos2.x, pos2.y, pos2.z, pos2.x, pos2.y, pos2.z, pos13.x, pos13.y, pos13.z, c1, c2);
                     TesselatorUtils.drawQuadGradient(tes, matrix4f, pos11.x, pos11.y, pos11.z, pos2.x, pos2.y,
                             pos2.z, pos2.x, pos2.y, pos2.z, pos12.x, pos12.y, pos12.z, c1, c2);
-                    TesselatorUtils.drawQuadGradient(tes, matrix4f, pos12.x, pos12.y, pos12.z, pos2.x, pos2.y,
-                            pos2.z, pos2.x, pos2.y, pos2.z, pos13.x, pos13.y, pos13.z, c1, c2);
                     TesselatorUtils.drawQuadGradient(tes, matrix4f, pos13.x, pos13.y, pos13.z, pos2.x, pos2.y,
                             pos2.z, pos2.x, pos2.y, pos2.z, pos14.x, pos14.y, pos14.z, c1, c2);
                     TesselatorUtils.drawQuadGradient(tes, matrix4f, pos14.x, pos14.y, pos14.z, pos2.x, pos2.y,
                             pos2.z, pos2.x, pos2.y, pos2.z, pos11.x, pos11.y, pos11.z, c1, c2);
                 } else {
-                    Vec3 axis2 = prevPoss[i + 1].subtract(prevPoss[i + 2]);
-                    Vec3 vec2 = VectorUtils.rotate(crossVecs[i], axis2, 90);
 
-                    Vec3 pos11 = prevPoss[i].add(crossVecs[i]);
-                    Vec3 pos12 = prevPoss[i].add(vec1);
-                    Vec3 pos13 = prevPoss[i].add(crossVecs[i].scale(-1));
-                    Vec3 pos14 = prevPoss[i].add(vec1.scale(-1));
-                    Vec3 pos21 = prevPoss[i + 1].add(crossVecs[i + 1]);
-                    Vec3 pos22 = prevPoss[i + 1].add(vec2);
-                    Vec3 pos23 = prevPoss[i + 1].add(crossVecs[i + 1].scale(-1));
-                    Vec3 pos24 = prevPoss[i + 1].add(vec2.scale(-1));
+                    Vec3 pos11 = prevPoses.get(i).add(crossVecs[i][0]);
+                    Vec3 pos12 = prevPoses.get(i).add(crossVecs[i][1]);
+                    Vec3 pos13 = prevPoses.get(i).add(crossVecs[i][0].scale(-1));
+                    Vec3 pos14 = prevPoses.get(i).add(crossVecs[i][1].scale(-1));
+                    Vec3 pos21 = prevPoses.get(i + 1).add(crossVecs[i + 1][0]);
+                    Vec3 pos22 = prevPoses.get(i + 1).add(crossVecs[i + 1][1]);
+                    Vec3 pos23 = prevPoses.get(i + 1).add(crossVecs[i + 1][0].scale(-1));
+                    Vec3 pos24 = prevPoses.get(i + 1).add(crossVecs[i + 1][1].scale(-1));
 
                     if (i == 0) {
-                        TesselatorUtils.drawFullQuadWithColor(tes, matrix4f, pos11.x, pos11.y, pos11.z, pos12.x, pos12.y,
-                                pos12.z, pos13.x, pos13.y, pos13.z, pos14.x, pos14.y, pos14.z, color1);
+                        TesselatorUtils.drawQuadGradient(tes, matrix4f, pos11.x, pos11.y, pos11.z, pos12.x, pos12.y,
+                                pos12.z, pos13.x, pos13.y, pos13.z, pos14.x, pos14.y, pos14.z, color1, color1);
                     }
 
                     TesselatorUtils.drawQuadGradient(tes, matrix4f, pos11.x, pos11.y, pos11.z, pos21.x, pos21.y,
@@ -181,43 +183,6 @@ public class RenderUtils {
 
             poseStack.popPose();
         }
-    }
-
-    @Builder
-    @Getter
-    public static final class Streak {
-
-        // Width of segments
-        float width;
-
-        // Number of segments in the streak
-        @Builder.Default
-        int segments = 4;
-
-        // Lifetime of segments
-        @Builder.Default
-        int segmentsLife = 40;
-
-        // The first color of the streak
-        @Builder.Default
-        Color firstColor = Color.WHITE;
-
-        // The second color of the streak
-        @Builder.Default
-        Color secondColor = Color.WHITE;
-
-        // Start color of streak
-        @Builder.Default
-        float startAlpha = 1;
-
-        // End color of streak
-        @Builder.Default
-        float finalAlpha = 0.5f;
-
-        // If after-entity-death streak will generate particles
-        @Builder.Default
-        boolean particlesAfterDeath = false;
-
     }
 
 }

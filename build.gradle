@@ -8,6 +8,12 @@ buildscript {
             url = 'https://repo.spongepowered.org/maven'
         }
         maven { url = 'https://plugins.gradle.org/m2/' }
+        maven {
+            url "https://cursemaven.com/"
+            content {
+                includeGroup "curse.maven"
+            }
+        }
     }
     dependencies {
         classpath 'io.freefair.gradle:lombok-plugin:6.6'
@@ -71,7 +77,7 @@ minecraft {
             property 'forge.logging.console.level', 'debug'
 
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
-            property 'forge.enabledGameTestNamespaces', 'examplemod'
+            property 'forge.enabledGameTestNamespaces', 'encorcellcraft'
 
             mods {
                 "${mod_id}" {
@@ -87,7 +93,7 @@ minecraft {
 
             property 'forge.logging.console.level', 'debug'
 
-            property 'forge.enabledGameTestNamespaces', 'examplemod'
+            property 'forge.enabledGameTestNamespaces', 'ensorcellcraft'
 
             mods {
                 "${mod_id}" {
@@ -106,7 +112,7 @@ minecraft {
 
             property 'forge.logging.console.level', 'debug'
 
-            property 'forge.enabledGameTestNamespaces', 'examplemod'
+            property 'forge.enabledGameTestNamespaces', 'ensorcellcraft'
 
             mods {
                 "${mod_id}" {

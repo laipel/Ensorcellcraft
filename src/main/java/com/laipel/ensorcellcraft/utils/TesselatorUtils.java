@@ -14,26 +14,26 @@ public class TesselatorUtils {
                                     double pos4Z, Color color) {
 
         if (matrix4f != null) {
-            tes.vertex(matrix4f, (float) pos1X, (float) pos1Y, (float) pos1Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha())
+            tes.vertex(matrix4f, (float) pos1X, (float) pos1Y, (float) pos1Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha())
                     .endVertex();
-            tes.vertex(matrix4f, (float) pos2X, (float) pos2Y, (float) pos2Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
-            tes.vertex(matrix4f, (float) pos3X, (float) pos3Y, (float) pos3Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
-            tes.vertex(matrix4f, (float) pos4X, (float) pos4Y, (float) pos4Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
+            tes.vertex(matrix4f, (float) pos2X, (float) pos2Y, (float) pos2Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
+            tes.vertex(matrix4f, (float) pos3X, (float) pos3Y, (float) pos3Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
+            tes.vertex(matrix4f, (float) pos4X, (float) pos4Y, (float) pos4Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
 
-            tes.vertex(matrix4f, (float) pos4X, (float) pos4Y, (float) pos4Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
-            tes.vertex(matrix4f, (float) pos3X, (float) pos3Y, (float) pos3Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
-            tes.vertex(matrix4f, (float) pos2X, (float) pos2Y, (float) pos2Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
-            tes.vertex(matrix4f, (float) pos1X, (float) pos1Y, (float) pos1Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
+            tes.vertex(matrix4f, (float) pos4X, (float) pos4Y, (float) pos4Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
+            tes.vertex(matrix4f, (float) pos3X, (float) pos3Y, (float) pos3Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
+            tes.vertex(matrix4f, (float) pos2X, (float) pos2Y, (float) pos2Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
+            tes.vertex(matrix4f, (float) pos1X, (float) pos1Y, (float) pos1Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
         } else {
-            tes.vertex( pos1X,  pos1Y,  pos1Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
-            tes.vertex( pos2X,  pos2Y,  pos2Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
-            tes.vertex( pos3X,  pos3Y,  pos3Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
-            tes.vertex( pos4X,  pos4Y,  pos4Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
+            tes.vertex( pos1X,  pos1Y,  pos1Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
+            tes.vertex( pos2X,  pos2Y,  pos2Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
+            tes.vertex( pos3X,  pos3Y,  pos3Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
+            tes.vertex( pos4X,  pos4Y,  pos4Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
 
-            tes.vertex( pos4X,  pos4Y,  pos4Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
-            tes.vertex( pos3X,  pos3Y,  pos3Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
-            tes.vertex( pos2X,  pos2Y,  pos2Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
-            tes.vertex( pos1X,  pos1Y,  pos1Z).color(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()).endVertex();
+            tes.vertex( pos4X,  pos4Y,  pos4Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
+            tes.vertex( pos3X,  pos3Y,  pos3Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
+            tes.vertex( pos2X,  pos2Y,  pos2Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
+            tes.vertex( pos1X,  pos1Y,  pos1Z).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
         }
 
     }
