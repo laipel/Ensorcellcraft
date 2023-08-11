@@ -5,8 +5,6 @@ import com.laipel.ensorcellcraft.api.soul.ISoul;
 import com.laipel.ensorcellcraft.common.entity.SoulEntity;
 import com.laipel.ensorcellcraft.common.registry.EntityRegistry;
 import com.laipel.ensorcellcraft.common.registry.SoulRegistry;
-import net.minecraft.network.chat.ClickEvent;
-import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;

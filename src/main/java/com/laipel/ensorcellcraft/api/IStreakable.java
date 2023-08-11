@@ -3,10 +3,9 @@ package com.laipel.ensorcellcraft.api;
 import lombok.Builder;
 import lombok.Getter;
 import net.minecraft.world.entity.Entity;
-import org.jetbrains.annotations.NonBlocking;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.awt.*;
 import java.util.List;
 
@@ -16,7 +15,9 @@ public interface IStreakable<T extends Entity> {
 
     int ticksBeforeDeath();
 
-    @NotNull List<Streak> getStreaks();
+    @NotNull Streak getStreak();
+
+    @NotNull StreakBuffer getStreakBuffer();
 
     @Builder
     @Getter
@@ -52,6 +53,40 @@ public interface IStreakable<T extends Entity> {
         // If after-entity-death streak will generate particles
         @Builder.Default
         private boolean particlesAfterDeath = false;
+
+    }
+
+    class StreakBuffer {
+
+        long time = 0;
+        Vec3[] poses;
+        int size;
+
+        public StreakBuffer(int size) {
+            poses = new Vec3[size + 1];
+            this.size = size;
+        }
+
+        public boolean contains(int index) {
+            return poses.length > index && poses[index] != null;
+        }
+
+        public Vec3 get(int index) {
+            return poses[index];
+        }
+
+        public void put(int index, Vec3 vec3) {
+            poses[index] = vec3;
+        }
+
+        public long getTime() {
+            return time;
+        }
+
+        public void setTime(long time) {
+            this.time = time;
+        }
+
 
     }
 }

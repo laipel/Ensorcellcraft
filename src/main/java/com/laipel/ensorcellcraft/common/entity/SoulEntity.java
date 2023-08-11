@@ -28,9 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import java.awt.*;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 import static com.laipel.ensorcellcraft.common.registry.SoulRegistry.HOLLOW_SOUL;
 import static com.laipel.ensorcellcraft.common.registry.SoulRegistry.SOUL_REGISTRY;
@@ -97,15 +95,15 @@ public class SoulEntity extends Entity implements IStreakable<SoulEntity> {
             updateAccel();
             setRandomAccel();
         } else {
-            if (tickCount % 10 == 0
-                    && container.canAbsorbSoul(this.getSoul(), 1)
-                    && this.distanceToSqr(container.getX(), container.getY(), container.getZ()) < 64) {
-                Vec3 pos = new Vec3(container.getX(), container.getY(), container.getZ());
-                accel = pos.subtract(this.position()).normalize().scale(0.06f);
-            } else {
-                container = null;
-                this.checkContainers();
-            }
+            if (tickCount % 10 == 0)
+                if (container.canAbsorbSoul(this.getSoul(), 1)
+                        && this.distanceToSqr(container.getX(), container.getY(), container.getZ()) < 64) {
+                    Vec3 pos = new Vec3(container.getX(), container.getY(), container.getZ());
+                    accel = pos.subtract(this.position()).normalize().scale(0.06f);
+                } else {
+                    container = null;
+                    this.checkContainers();
+                }
         }
 
         this.addDeltaMovement(accel);
@@ -170,7 +168,7 @@ public class SoulEntity extends Entity implements IStreakable<SoulEntity> {
     }
 
     protected void updateAccel() {
-        if (this.getFeetBlockState().isAir()) {
+        if (this.getFeetBlockState().getCollisionShape(level, this.blockPosition()).isEmpty()) {
             for (int i = -2; i <= 2; i++)
                 for (int k = -2; k <= 2; k++) {
                     BlockPos blockPos = new BlockPos(
@@ -233,7 +231,7 @@ public class SoulEntity extends Entity implements IStreakable<SoulEntity> {
         for (int i = 0; i < 20; i++) {
             CircleTintData data = new CircleTintData(new Color(r, g, b), 0.2F, 40, 0.95F, false, false, new ScatterController());
             level.addAlwaysVisibleParticle(data, true, this.position().x, this.position().y, this.position().z,
-                    0.02 - Math.random()  * 0.04, 0.02 - Math.random()  * 0.04, 0.02 - Math.random()  * 0.04);
+                    0.02 - Math.random() * 0.04, 0.02 - Math.random() * 0.04, 0.02 - Math.random() * 0.04);
         }
     }
 
@@ -301,16 +299,26 @@ public class SoulEntity extends Entity implements IStreakable<SoulEntity> {
         return this.getMaxAge() - this.getAge();
     }
 
+    private StreakBuffer streakBuffer;
+    private static final int SEGMENTS_SIZE = 5;
+
     @Override
-    public @NotNull List<Streak> getStreaks() {
-        return Collections.singletonList(IStreakable.Streak.builder()
+    public @NotNull Streak getStreak() {
+        return IStreakable.Streak.builder()
                 .width(0.08f)
-                .segments(5)
+                .segments(SEGMENTS_SIZE)
                 .startAlpha(0.8f)
                 .finalAlpha(0.1f)
                 .firstColor(Color.WHITE)
                 .secondColor(getSoul().getColor())
                 .segmentsLife(5)
-                .build());
+                .build();
+    }
+
+    @Override
+    public @NotNull StreakBuffer getStreakBuffer() {
+        if (streakBuffer == null)
+            streakBuffer = new StreakBuffer(SEGMENTS_SIZE);
+        return streakBuffer;
     }
 }
