@@ -1,7 +1,7 @@
 package com.laipel.ensorcellcraft.common.entity;
 
 import com.laipel.ensorcellcraft.api.IStreakable;
-import com.laipel.ensorcellcraft.api.soul.IPositionedSoulContainer;
+import com.laipel.ensorcellcraft.api.soul.IWorldSoulContainer;
 import com.laipel.ensorcellcraft.api.soul.ISoul;
 import com.laipel.ensorcellcraft.api.soul.ISoulContainer;
 import com.laipel.ensorcellcraft.api.soul.StaticPositionSoulContainer;
@@ -35,7 +35,7 @@ import static com.laipel.ensorcellcraft.common.registry.SoulRegistry.SOUL_REGIST
 
 public class SoulEntity extends Entity implements IStreakable<SoulEntity> {
 
-    private IPositionedSoulContainer container;
+    private IWorldSoulContainer container;
     private static final EntityDataAccessor<Integer> VALUE = SynchedEntityData.defineId(SoulEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<String> SOUL = SynchedEntityData.defineId(SoulEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> AGE = SynchedEntityData.defineId(SoulEntity.class, EntityDataSerializers.INT);
@@ -135,9 +135,9 @@ public class SoulEntity extends Entity implements IStreakable<SoulEntity> {
     protected void checkContainers() {
         double distance = Double.MAX_VALUE;
         container = this.getLevel().getEntitiesOfClass(LivingEntity.class,
-                        this.getBoundingBox().inflate(7), e -> e instanceof IPositionedSoulContainer container$
+                        this.getBoundingBox().inflate(7), e -> e instanceof IWorldSoulContainer container$
                                 && container$.canAbsorbSoul(getSoul(), 1))
-                .stream().map(IPositionedSoulContainer::of)
+                .stream().map(IWorldSoulContainer::of)
                 .min(Comparator.comparing(e -> ((LivingEntity) e).distanceToSqr(this)))
                 .orElse(null);
         if (container != null)
@@ -235,11 +235,11 @@ public class SoulEntity extends Entity implements IStreakable<SoulEntity> {
         }
     }
 
-    public IPositionedSoulContainer getContainer() {
+    public IWorldSoulContainer getContainer() {
         return container;
     }
 
-    public void setContainer(IPositionedSoulContainer container) {
+    public void setContainer(IWorldSoulContainer container) {
         this.container = container;
     }
 

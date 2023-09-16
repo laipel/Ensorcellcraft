@@ -1,6 +1,6 @@
 package com.laipel.ensorcellcraft.mixins;
 
-import com.laipel.ensorcellcraft.api.soul.IPositionedSoulContainer;
+import com.laipel.ensorcellcraft.api.soul.IWorldSoulContainer;
 import com.laipel.ensorcellcraft.api.soul.ISoul;
 import com.laipel.ensorcellcraft.api.soul.ISoulContainer;
 import com.laipel.ensorcellcraft.api.soul.SoulList;
@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Implements({@Interface(iface = IPositionedSoulContainer.class, prefix = "i$")})
+@Implements({@Interface(iface = IWorldSoulContainer.class, prefix = "i$")})
 @Mixin(LivingEntity.class)
 public abstract class MobMixin extends Entity {
 

@@ -3,7 +3,7 @@ package com.laipel.ensorcellcraft.api.soul;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 
-public interface IPositionedSoulContainer extends ISoulContainer {
+public interface IWorldSoulContainer extends ISoulContainer {
 
     double getX();
 
@@ -13,8 +13,8 @@ public interface IPositionedSoulContainer extends ISoulContainer {
 
     Level getLevel();
 
-    static IPositionedSoulContainer of(LivingEntity livingEntity) {
-        return (IPositionedSoulContainer) livingEntity;
+    static IWorldSoulContainer of(LivingEntity livingEntity) {
+        return (IWorldSoulContainer) livingEntity;
     }
 
 }
