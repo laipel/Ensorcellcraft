@@ -1,15 +1,15 @@
 package com.laipel.ensorcellcraft.mixins;
 
-import com.laipel.ensorcellcraft.api.soul.IWorldSoulContainer;
-import com.laipel.ensorcellcraft.api.soul.ISoul;
-import com.laipel.ensorcellcraft.api.soul.ISoulContainer;
-import com.laipel.ensorcellcraft.api.soul.SoulList;
+import com.laipel.ensorcellcraft.api.soul.*;
+import com.mojang.serialization.Dynamic;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Implements;
@@ -27,137 +27,141 @@ public abstract class MobMixin extends Entity {
 
     @Shadow public abstract ItemStack getItemBySlot(EquipmentSlot p_21467_);
 
-    @Nullable private ISoulContainer getSoulContainerInMainHand() {
-        if (this.getItemBySlot(EquipmentSlot.MAINHAND).getItem() instanceof ISoulContainer container)
-            return container;
+    @Shadow protected abstract Brain<?> makeBrain(Dynamic<?> p_21069_);
+
+    @Nullable private Pair<IItemSoulContainer, ItemStack> getSoulContainerInMainHand() {
+        ItemStack stack = getItemBySlot(EquipmentSlot.MAINHAND);
+        if (stack.getItem() instanceof IItemSoulContainer container)
+            return Pair.of(container, stack);
         return null;
     }
 
-    @Nullable private ISoulContainer getSoulContainerInOffHand() {
-        if (this.getItemBySlot(EquipmentSlot.OFFHAND).getItem() instanceof ISoulContainer container)
-            return container;
+    @Nullable private Pair<IItemSoulContainer, ItemStack> getSoulContainerInOffHand() {
+        ItemStack stack = getItemBySlot(EquipmentSlot.OFFHAND);
+        if (stack.getItem() instanceof IItemSoulContainer container)
+            return Pair.of(container, stack);
         return null;
     }
 
     public int i$addSoul(ISoul soul, int amount) {
-        ISoulContainer mainContainer = this.getSoulContainerInMainHand();
+        Pair<IItemSoulContainer, ItemStack> mainContainer = this.getSoulContainerInMainHand();
         if (mainContainer != null)
-            amount = mainContainer.addSoul(soul, amount);
+            amount = mainContainer.getKey().addSoul(soul, amount, mainContainer.getValue());
 
         if (amount == 0)
             return 0;
 
-        ISoulContainer offContainer = this.getSoulContainerInOffHand();
+        Pair<IItemSoulContainer, ItemStack> offContainer = this.getSoulContainerInOffHand();
         if (offContainer == null)
             return amount;
-        return offContainer.addSoul(soul, amount);
+        return offContainer.getKey().addSoul(soul, amount, offContainer.getValue());
     }
 
     @NotNull
     public SoulList i$addSouls(SoulList soulList) {
-        ISoulContainer mainContainer = this.getSoulContainerInMainHand();
+        Pair<IItemSoulContainer, ItemStack> mainContainer = this.getSoulContainerInMainHand();
         if (mainContainer != null)
-            soulList = mainContainer.addSouls(soulList);
+            soulList = mainContainer.getKey().addSouls(soulList, mainContainer.getValue());
 
         if (soulList.hasNoSouls())
             return soulList;
 
-        ISoulContainer offContainer = this.getSoulContainerInOffHand();
+        Pair<IItemSoulContainer, ItemStack> offContainer = this.getSoulContainerInOffHand();
         if (offContainer == null)
             return soulList;
-        return offContainer.addSouls(soulList);
+        return offContainer.getKey().addSouls(soulList, offContainer.getValue());
     }
 
     public int i$receiveSoul(ISoul soul, int amount) {
-        ISoulContainer mainContainer = this.getSoulContainerInMainHand();
+        Pair<IItemSoulContainer, ItemStack> mainContainer = this.getSoulContainerInMainHand();
         if (mainContainer != null)
-            amount = mainContainer.receiveSoul(soul, amount);
+            amount = mainContainer.getKey().receiveSoul(soul, amount, mainContainer.getValue());
 
         if (amount == 0)
             return 0;
 
-        ISoulContainer offContainer = this.getSoulContainerInOffHand();
+        Pair<IItemSoulContainer, ItemStack> offContainer = this.getSoulContainerInOffHand();
         if (offContainer == null)
             return amount;
-        return offContainer.receiveSoul(soul, amount);
+        return offContainer.getKey().receiveSoul(soul, amount, offContainer.getValue());
     }
 
     @NotNull
     public SoulList i$receiveSouls(SoulList soulList) {
-        ISoulContainer mainContainer = this.getSoulContainerInMainHand();
+        Pair<IItemSoulContainer, ItemStack> mainContainer = this.getSoulContainerInMainHand();
         if (mainContainer != null)
-            soulList = mainContainer.receiveSouls(soulList);
+            soulList = mainContainer.getKey().receiveSouls(soulList, mainContainer.getValue());
 
         if (soulList.hasNoSouls())
             return soulList;
 
-        ISoulContainer offContainer = this.getSoulContainerInOffHand();
+        Pair<IItemSoulContainer, ItemStack> offContainer = this.getSoulContainerInOffHand();
         if (offContainer == null)
             return soulList;
-        return offContainer.receiveSouls(soulList);
+        return offContainer.getKey().receiveSouls(soulList, offContainer.getValue());
     }
 
     public boolean i$canAbsorbSouls(SoulList soulList) {
-        ISoulContainer mainContainer = this.getSoulContainerInMainHand();
-        if (mainContainer != null && mainContainer.canAbsorbSouls(soulList))
+        Pair<IItemSoulContainer, ItemStack> mainContainer = this.getSoulContainerInMainHand();
+        if (mainContainer != null && mainContainer.getKey().canAbsorbSouls(soulList, mainContainer.getValue()))
             return true;
 
-        ISoulContainer offContainer = this.getSoulContainerInOffHand();
-        return offContainer != null && offContainer.canAbsorbSouls(soulList);
+        Pair<IItemSoulContainer, ItemStack> offContainer = this.getSoulContainerInOffHand();
+        return offContainer != null && offContainer.getKey().canAbsorbSouls(soulList, offContainer.getValue());
     }
 
     public boolean i$canAbsorbSoul(ISoul soul, int amount) {
-        ISoulContainer mainContainer = this.getSoulContainerInMainHand();
-        if (mainContainer != null && mainContainer.canAbsorbSoul(soul, amount))
+        Pair<IItemSoulContainer, ItemStack> mainContainer = this.getSoulContainerInMainHand();
+        if (mainContainer != null && mainContainer.getKey().canAbsorbSoul(soul, amount, mainContainer.getValue()))
             return true;
 
-        ISoulContainer offContainer = this.getSoulContainerInOffHand();
-        return offContainer != null && offContainer.canAbsorbSoul(soul, amount);
+        Pair<IItemSoulContainer, ItemStack> offContainer = this.getSoulContainerInOffHand();
+        return offContainer != null && offContainer.getKey().canAbsorbSoul(soul, amount, offContainer.getValue());
     }
 
     public boolean i$hasSouls(SoulList soulList) {
-        ISoulContainer mainContainer = this.getSoulContainerInMainHand();
-        if (mainContainer != null && mainContainer.hasSouls(soulList))
+        Pair<IItemSoulContainer, ItemStack> mainContainer = this.getSoulContainerInMainHand();
+        if (mainContainer != null && mainContainer.getKey().hasSouls(soulList, mainContainer.getValue()))
             return true;
 
-        ISoulContainer offContainer = this.getSoulContainerInOffHand();
-        return offContainer != null && offContainer.hasSouls(soulList);
+        Pair<IItemSoulContainer, ItemStack> offContainer = this.getSoulContainerInOffHand();
+        return offContainer != null && offContainer.getKey().hasSouls(soulList, offContainer.getValue());
     }
 
     public boolean i$hasSoul(ISoul soul, int amount) {
-        ISoulContainer mainContainer = this.getSoulContainerInMainHand();
-        if (mainContainer != null && mainContainer.hasSoul(soul, amount))
+        Pair<IItemSoulContainer, ItemStack> mainContainer = this.getSoulContainerInMainHand();
+        if (mainContainer != null && mainContainer.getKey().hasSoul(soul, amount, mainContainer.getValue()))
             return true;
 
-        ISoulContainer offContainer = this.getSoulContainerInOffHand();
-        return offContainer != null && offContainer.hasSoul(soul, amount);
+        Pair<IItemSoulContainer, ItemStack> offContainer = this.getSoulContainerInOffHand();
+        return offContainer != null && offContainer.getKey().hasSoul(soul, amount, offContainer.getValue());
     }
 
     @NotNull
     public SoulList i$getSouls() {
         SoulList soulList = new SoulList();
-        ISoulContainer mainContainer = this.getSoulContainerInMainHand();
+        Pair<IItemSoulContainer, ItemStack> mainContainer = this.getSoulContainerInMainHand();
         if (mainContainer != null)
-            soulList.add(mainContainer.getSouls());
+            soulList.add(mainContainer.getKey().getSouls(mainContainer.getValue()));
 
         if (soulList.hasNoSouls())
             return soulList;
 
-        ISoulContainer offContainer = this.getSoulContainerInOffHand();
+        Pair<IItemSoulContainer, ItemStack> offContainer = this.getSoulContainerInOffHand();
         if (offContainer == null)
             return soulList;
-        soulList.add(offContainer.getSouls());
+        soulList.add(offContainer.getKey().getSouls(offContainer.getValue()));
         return soulList;
     }
 
     public void i$clear() {
-        ISoulContainer mainContainer = this.getSoulContainerInMainHand();
+        Pair<IItemSoulContainer, ItemStack> mainContainer = this.getSoulContainerInMainHand();
         if (mainContainer != null)
-            mainContainer.clear();
+            mainContainer.getKey().clear(mainContainer.getValue());
 
-        ISoulContainer offContainer = this.getSoulContainerInOffHand();
+        Pair<IItemSoulContainer, ItemStack> offContainer = this.getSoulContainerInOffHand();
         if (offContainer != null)
-            offContainer.clear();
+            offContainer.getKey().clear(offContainer.getValue());
     }
 
     public double i$getX() {
